@@ -23,6 +23,9 @@ namespace SecureAPI_Identity_EF
 {
     public class Startup
     {
+        // CORS origin policy name
+        private readonly string _corsOriginName = "myCorsOrigin";
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -38,6 +41,15 @@ namespace SecureAPI_Identity_EF
             services.AddIdentity<AuthUser, IdentityRole>(opt => {}).AddEntityFrameworkStores<AuthUserContext>();
             
             services.AddControllers();
+
+            // Configure CORS origin policy
+            services.AddCors(opt => {
+                opt.AddPolicy(_corsOriginName, builder => {
+                    builder.AllowAnyHeader();
+                    builder.AllowAnyMethod();
+                    builder.AllowAnyOrigin();
+                });
+            });
 
             // JWT Authentication
             var key = Encoding.ASCII.GetBytes(Configuration["JWTConfig:Key"]);
@@ -77,6 +89,7 @@ namespace SecureAPI_Identity_EF
 
             app.UseHttpsRedirection();
 
+            app.UseCors(_corsOriginName);
             app.UseRouting();
 
             app.UseAuthentication();

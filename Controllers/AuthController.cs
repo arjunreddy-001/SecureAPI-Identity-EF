@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +7,7 @@ using SecureAPI.Models.BindingModels;
 using SecureAPI.Models.DTOs;
 using SecureAPI.Services;
 using SecureAPI_Identity_EF.Models.BindingModels;
+using SecureAPI_Identity_EF.Models.Response;
 
 namespace SecureAPI_Identity_EF.Controllers
 {
@@ -32,16 +32,16 @@ namespace SecureAPI_Identity_EF.Controllers
 
                 if(result.Succeeded)
                 {
-                    return await Task.FromResult("User has been registered");
-                }
+                    return await Task.FromResult(new ResponseModel(ResponseCode.OK, "User has been registered", null));
+                }  
 
                 return await Task.FromResult(
-                    string.Join(",", result.Errors.Select(x => x.Description).ToArray())
+                    new ResponseModel(ResponseCode.Error, "", string.Join(",", result.Errors.Select(x => x.Description).ToArray()))
                 );
             } 
-            catch(Exception ex)
+            catch(Exception ex)             
             {
-                return await Task.FromResult(ex.Message);
+                return await Task.FromResult(new ResponseModel(ResponseCode.Error, ex.Message, null));
             } 
         }
     
@@ -52,7 +52,7 @@ namespace SecureAPI_Identity_EF.Controllers
             {
                 if(ModelState.IsValid)
                 {
-                    var result = await _authSvc.Authenticate(model.Email, model.Password);
+                    var result = await _authSvc.Authenticate(model.Email, model.Password);  
 
                     if(result.Succeeded)
                     {
@@ -60,15 +60,15 @@ namespace SecureAPI_Identity_EF.Controllers
                         var user = new AuthUserDTO(authUser.FullName, authUser.Email, authUser.UserName, authUser.DateCreated);
                         user.Token = _authSvc.GenerateToken(authUser);
 
-                        return await Task.FromResult(user);
+                        return await Task.FromResult(new ResponseModel(ResponseCode.OK, "User authenticated", user));
                     }
                 }
 
-                return await Task.FromResult("invalid email or password");
+                return await Task.FromResult(new ResponseModel(ResponseCode.OK, "Invalid email or password", null));
             }
             catch(Exception ex)
             {
-                return await Task.FromResult(ex.Message);
+                return await Task.FromResult(new ResponseModel(ResponseCode.Error, ex.Message, null));
             }
         }
     }
